@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height">
+  <title>Figma Plugin - Logo Placement</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+      margin: 0;
+      background-color: #F9FAFB;
+      color: #333;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #4B5563;
+      margin-bottom: 20px;
+    }
+
+    .instructions {
+      font-size: 0.875rem;
+      color: #6B7280;
+      background-color: #E5E7EB;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .counter {
+      font-size: 0.95rem;
+      text-align: center;
+      color: #374151;
+      margin-bottom: 20px;
+    }
+
+    #upload {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed #93C5FD;
+      background: #EFF6FF;
+      color: #1E3A8A;
+      border-radius: 8px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    #upload:hover {
+      background: #DBEAFE;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #3B82F6;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .button:hover {
+      background: #2563EB;
+    }
+
+    .button:disabled {
+      background: #D1D5DB;
+      color: #9CA3AF;
+      cursor: not-allowed;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 0.875rem;
+      color: #9CA3AF;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <p>Select a frame first, then upload up to 4 logos.</p>
+
+  <div class="counter">Logos uploaded: <span id="logoCount">0</span>/4</div>
+
+  <input type="file" id="upload" accept="image/*">
+  <button id="reset" class="button">Reset All Logos</button>
+
+
+  <script>
+    let logoCount = 0;
+    const maxLogos = 4;
+    const uploadInput = document.getElementById('upload');
+    const logoCountSpan = document.getElementById('logoCount');
+
+    uploadInput.onchange = (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'upload-logo',
+            imageData: new Uint8Array(e.target.result)
+          }
+        }, '*');
+
+        logoCount++;
+        logoCountSpan.textContent = logoCount;
+
+        if (logoCount >= maxLogos) {
+          uploadInput.disabled = true;
+        }
+
+        event.target.value = '';
+      };
+
+      reader.readAsArrayBuffer(file);
+    };
+
+    document.getElementById('reset').onclick = () => {
+      parent.postMessage({
+        pluginMessage: { type: 'reset' }
+      }, '*');
+      logoCount = 0;
+      logoCountSpan.textContent = logoCount;
+      uploadInput.disabled = false;
+    };
+
+    window.onmessage = (event) => {
+      if (event.data.pluginMessage.type === 'max-logos-reached') {
+        uploadInput.disabled = true;
+      }
+    };
+  </script>
+</body>
+</html>

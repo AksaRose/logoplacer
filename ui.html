@@ -105,58 +105,70 @@
 </head>
 <body>
   <p>Select a frame first, then upload up to 4 logos.</p>
-
   <div class="counter">Logos uploaded: <span id="logoCount">0</span>/4</div>
-
   <input type="file" id="upload" accept="image/*">
   <button id="reset" class="button">Reset All Logos</button>
-
-
   <script>
-    let logoCount = 0;
-    const maxLogos = 4;
-    const uploadInput = document.getElementById('upload');
-    const logoCountSpan = document.getElementById('logoCount');
+      let logoCount = 0;
+      const maxLogos = 4;
+      const uploadInput = document.getElementById('upload');
+      const logoCountSpan = document.getElementById('logoCount');
 
-    uploadInput.onchange = (event) => {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        parent.postMessage({
-          pluginMessage: {
-            type: 'upload-logo',
-            imageData: new Uint8Array(e.target.result)
-          }
-        }, '*');
-
-        logoCount++;
-        logoCountSpan.textContent = logoCount;
-
-        if (logoCount >= maxLogos) {
-          uploadInput.disabled = true;
-        }
-
-        event.target.value = '';
+      uploadInput.onchange = (event) => {
+          const file = event.target.files[0];
+          
+          // Create an image element to get dimensions
+          const img = new Image();
+          const objectUrl = URL.createObjectURL(file);
+          
+          img.onload = () => {
+              // Get the dimensions
+              const dimensions = {
+                  width: img.width,
+                  height: img.height
+              };
+              
+              // Clean up
+              URL.revokeObjectURL(objectUrl);
+              
+              // Read file as ArrayBuffer
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                  parent.postMessage({
+                      pluginMessage: {
+                          type: 'upload-logo',
+                          imageData: new Uint8Array(e.target.result),
+                          dimensions: dimensions
+                      }
+                  }, '*');
+                  
+                  logoCount++;
+                  logoCountSpan.textContent = logoCount;
+                  if (logoCount >= maxLogos) {
+                      uploadInput.disabled = true;
+                  }
+                  event.target.value = '';
+              };
+              reader.readAsArrayBuffer(file);
+          };
+          
+          img.src = objectUrl;
       };
 
-      reader.readAsArrayBuffer(file);
-    };
+      document.getElementById('reset').onclick = () => {
+          parent.postMessage({
+              pluginMessage: { type: 'reset' }
+          }, '*');
+          logoCount = 0;
+          logoCountSpan.textContent = logoCount;
+          uploadInput.disabled = false;
+      };
 
-    document.getElementById('reset').onclick = () => {
-      parent.postMessage({
-        pluginMessage: { type: 'reset' }
-      }, '*');
-      logoCount = 0;
-      logoCountSpan.textContent = logoCount;
-      uploadInput.disabled = false;
-    };
-
-    window.onmessage = (event) => {
-      if (event.data.pluginMessage.type === 'max-logos-reached') {
-        uploadInput.disabled = true;
-      }
-    };
+      window.onmessage = (event) => {
+          if (event.data.pluginMessage.type === 'max-logos-reached') {
+              uploadInput.disabled = true;
+          }
+      };
   </script>
 </body>
 </html>

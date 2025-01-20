@@ -70,7 +70,6 @@ https://github.com/user-attachments/assets/1cd17909-6df6-47b0-b04a-a657e1e2c2ba
 
 git clone https://github.com/AksaRose/logoplacer.git
 
-cd logo-placer-plugin
 
 # Install dependencies
 

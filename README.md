@@ -4,6 +4,10 @@
 
 A Figma plugin that automatically arranges logos within frames while maintaining proper spacing and aspect ratios. Perfect for creating partner sections, client showcases, and marketing materials.
 
+
+https://github.com/user-attachments/assets/1cd17909-6df6-47b0-b04a-a657e1e2c2ba
+
+
 ## Features
 
 * Smart logo placement with automatic spacing

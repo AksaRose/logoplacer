@@ -1,40 +1,127 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# Logoplacer - Figma Plugin
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+## Description
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+A Figma plugin that automatically arranges logos within frames while maintaining proper spacing and aspect ratios. Perfect for creating partner sections, client showcases, and marketing materials.
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+## Features
 
-  https://nodejs.org/en/download/
+* Smart logo placement with automatic spacing
 
-Next, install TypeScript using the command:
+* Maintains original logo aspect ratios
 
-  npm install -g typescript
+* Maximum dimensions: 125px width, 50px height
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+* Consistent edge padding (20px)
 
-  npm install --save-dev @figma/plugin-typings
+* Supports up to 4 logos
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+* One-click reset functionality
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+* Simple drag-and-drop interface
 
-For more information, visit https://www.typescriptlang.org/
+## Installation
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+1\. Open Figma Desktop
 
-We recommend writing TypeScript code using Visual Studio code:
+2\. Go to `Plugins > Development > Import plugin from manifest...`
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+3\. Select the `manifest.json` file from this project
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+## How to Use
+
+1\. Select a frame in your Figma design
+
+2\. Launch Logo Placer from the plugins menu
+
+3\. Click to upload logos (maximum 4)
+
+4\. Logos will automatically arrange within the frame
+
+5\. Use the reset button to clear and start over
+
+### Placement Rules
+
+* **Single logo**: Left-aligned with edge padding
+
+* **Two logos**: Placed at left and right edges
+
+* **Three/Four logos**: Equally spaced across frame width
+
+## Development Setup
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/)
+
+* Figma desktop app
+
+* Code editor (VS Code recommended)
+
+### Local Development
+
+```bash
+
+# Clone the repository
+
+git clone https://github.com/AksaRose/logoplacer.git
+
+cd logo-placer-plugin
+
+# Install dependencies
+
+npm install
+
+
+```
+
+
+
+## Technical Details
+
+### Size Constraints
+
+* Maximum width: 125px
+
+* Maximum height: 50px
+
+* Edge padding: 20px
+
+* Maximum logos: 4
+
+### Supported Image Formats
+
+* PNG
+
+* JPG
+
+
+
+## Troubleshooting
+
+### Common Issues
+
+#### Logo Not Appearing
+
+* Ensure a frame is selected
+
+* Verify image format is supported
+
+* Check if image file is valid
+
+#### Logos Misaligned
+
+* Verify frame width is sufficient
+
+* Check frame selection
+
+#### Plugin Not Responding
+
+* Refresh Figma file
+
+* Restart plugin
+
+* Clear plugin cache
+
+
+*Made with ❤️ for the Figma community*

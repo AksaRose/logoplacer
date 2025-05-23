@@ -1,12 +1,25 @@
 figma.showUI(__html__, { width: 300, height: 400 });
 
-let uploadedLogos = [];
+// Store logos per frame using frame IDs as keys
+let frameLogos = {};
 const MAX_LOGOS = 4;
-const EDGE_PADDING = 20;
-const MAX_WIDTH = 125;
-const MAX_HEIGHT = 40;
+let lastSelectedFrameIds = [];
 
-function calculateDimensions(originalWidth, originalHeight) {
+// Calculate padding and max dimensions as percentages of frame size
+function getFrameConstants(frame) {
+  const edgePaddingPercent = 0.05; // 5% of frame width
+  const maxWidthPercent = 0.25; // 25% of frame width
+  const maxHeightPercent = 0.1; // 10% of frame height
+  
+  return {
+    EDGE_PADDING: Math.max(10, frame.width * edgePaddingPercent),
+    MAX_WIDTH: Math.max(60, frame.width * maxWidthPercent),
+    MAX_HEIGHT: Math.max(20, frame.height * maxHeightPercent)
+  };
+}
+
+function calculateDimensions(frame, originalWidth, originalHeight) {
+  const { MAX_WIDTH, MAX_HEIGHT } = getFrameConstants(frame);
   const aspectRatio = originalWidth / originalHeight;
   let newWidth, newHeight;
   
@@ -29,6 +42,7 @@ function calculateDimensions(originalWidth, originalHeight) {
 }
 
 function calculatePosition(frame, index, totalLogos, logoWidths) {
+  const { EDGE_PADDING } = getFrameConstants(frame);
   const leftPosition = EDGE_PADDING;
   
   switch(totalLogos) {
@@ -54,42 +68,125 @@ function calculatePosition(frame, index, totalLogos, logoWidths) {
   }
 }
 
+// Check for frame selection changes
+figma.on('selectionchange', () => {
+  const currentSelection = figma.currentPage.selection;
+  const currentFrames = currentSelection.filter(node => node.type === 'FRAME');
+  
+  // Get current frame IDs
+  const currentFrameIds = currentFrames.map(frame => frame.id);
+  
+  // If we had previous frames and selection changed to different frames
+  if (lastSelectedFrameIds.length > 0 && 
+      (currentFrameIds.length !== lastSelectedFrameIds.length || 
+       !currentFrameIds.every(id => lastSelectedFrameIds.includes(id)))) {
+    
+    // Show reminder notification
+    figma.notify("Don't forget to reset logos when changing frames!", { timeout: 3000 });
+  }
+  
+  // Update the last selected frame IDs
+  lastSelectedFrameIds = currentFrameIds;
+});
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'upload-logo') {
     const selection = figma.currentPage.selection;
-    if (selection.length === 0 || selection[0].type !== 'FRAME') {
-      figma.notify('Please select a frame first');
+    const frames = selection.filter(node => node.type === 'FRAME');
+    
+    if (frames.length === 0) {
+      figma.notify('Please select at least one frame');
       return;
     }
 
-    const frame = selection[0];
     try {
       const image = figma.createImage(msg.imageData);
       const dimensions = msg.dimensions;
-      
-      uploadedLogos.push({
+      const logoData = {
         image: image,
         originalWidth: dimensions.width,
         originalHeight: dimensions.height
+      };
+      
+      // Check if any frame already has the maximum number of logos
+      let framesAtMaxCapacity = 0;
+      for (const frame of frames) {
+        const frameId = frame.id;
+        if (!frameLogos[frameId]) {
+          frameLogos[frameId] = [];
+        }
+        
+        if (frameLogos[frameId].length >= MAX_LOGOS) {
+          framesAtMaxCapacity++;
+        }
+      }
+      
+      // If all selected frames are at max capacity, notify user
+      if (framesAtMaxCapacity === frames.length) {
+        figma.notify('All selected frames already have the maximum number of logos');
+        return;
+      }
+      
+      // Add the logo to each frame that has room
+      let updatedFramesCount = 0;
+      for (const frame of frames) {
+        const frameId = frame.id;
+        
+        // Skip frames that already have max logos
+        if (frameLogos[frameId].length >= MAX_LOGOS) continue;
+        
+        // Add logo to this frame
+        frameLogos[frameId].push(logoData);
+        await updateLogoPositions(frame, frameLogos[frameId]);
+        updatedFramesCount++;
+      }
+      
+      // Find the logo count from the first selected frame
+      const selectedFrameId = frames[0].id;
+      const logoCount = frameLogos[selectedFrameId] ? frameLogos[selectedFrameId].length : 0;
+      
+      // Update UI with the correct count from the first selected frame
+      figma.ui.postMessage({ 
+        type: 'update-count', 
+        count: logoCount
       });
       
-      await updateLogoPositions(frame, uploadedLogos);
-      figma.notify(`Logo ${uploadedLogos.length} added successfully!`);
+      figma.notify(`Logo added to ${updatedFramesCount} frame(s)`);
       
-      if (uploadedLogos.length >= MAX_LOGOS) {
+      // Check if the selected frames are now at max capacity
+      if (logoCount >= MAX_LOGOS) {
         figma.ui.postMessage({ type: 'max-logos-reached' });
       }
     } catch (error) {
       figma.notify('Error placing logo: ' + error.message);
     }
   } else if (msg.type === 'reset') {
-    uploadedLogos = [];
-    const frame = figma.currentPage.selection[0];
-    if (frame) {
+    const selection = figma.currentPage.selection;
+    const frames = selection.filter(node => node.type === 'FRAME');
+    
+    if (frames.length === 0) {
+      figma.notify('Please select at least one frame to reset');
+      return;
+    }
+    
+    // Clear logos from all selected frames
+    let totalLogosRemoved = 0;
+    for (const frame of frames) {
+      const frameId = frame.id;
+      if (frameLogos[frameId]) {
+        totalLogosRemoved += frameLogos[frameId].length;
+        // Properly remove the frame from tracking
+        delete frameLogos[frameId];
+      }
+      
       const logos = frame.findAll(node => node.name.startsWith('Logo'));
       logos.forEach(logo => logo.remove());
     }
-    figma.notify('Reset successful');
+    
+    // Reset the count in UI to 0
+    figma.ui.postMessage({ type: 'reset-count' });
+    
+    figma.notify(`Reset successful. Removed logos from ${frames.length} frame(s).`);
   }
 };
 
@@ -99,7 +196,7 @@ async function placeLogo(frame, logoData, index, xPosition) {
   
   try {
     const { originalWidth, originalHeight } = logoData;
-    const { width: newWidth, height: newHeight } = calculateDimensions(originalWidth, originalHeight);
+    const { width: newWidth, height: newHeight } = calculateDimensions(frame, originalWidth, originalHeight);
     
     logo.resize(newWidth, newHeight);
     logo.fills = [{
@@ -108,6 +205,7 @@ async function placeLogo(frame, logoData, index, xPosition) {
       scaleMode: 'FILL'
     }];
     
+    const { EDGE_PADDING } = getFrameConstants(frame);
     logo.y = EDGE_PADDING;
     logo.x = xPosition;
     frame.appendChild(logo);
@@ -126,7 +224,7 @@ async function updateLogoPositions(frame, logos) {
   
   const totalLogos = logos.length;
   const logoDimensions = logos.map(logo => {
-    return calculateDimensions(logo.originalWidth, logo.originalHeight);
+    return calculateDimensions(frame, logo.originalWidth, logo.originalHeight);
   });
   
   const logoWidths = logoDimensions.map(dim => dim.width);

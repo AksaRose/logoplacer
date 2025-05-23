@@ -11,11 +11,11 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      padding: 20px;
-      margin: 0;
-      background-color: #F9FAFB;
-      color: #333;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 16px;
+      margin: 0 auto;
+      background-color: #1E1E1E;
+      color: #E0E0E0;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
@@ -24,97 +24,169 @@
       height: 100vh;
       overflow: hidden;
       box-sizing: border-box;
+      max-width: 280px;
+      text-align: center;
     }
 
     h3 {
       font-size: 1.25rem;
       font-weight: 600;
-      color: #111827;
+      color: #FFFFFF;
       margin-bottom: 10px;
+      text-align: center;
+      width: 100%;
     }
 
     p {
       font-size: 0.95rem;
-      color: #4B5563;
+      color: #AFAFAF;
       margin-bottom: 20px;
+      text-align: center;
+      width: 100%;
     }
 
     .instructions {
       font-size: 0.875rem;
-      color: #6B7280;
-      background-color: #E5E7EB;
+      color: #AFAFAF;
+      background-color: #2A2A2A;
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 260px;
     }
 
     .counter {
       font-size: 0.95rem;
       text-align: center;
-      color: #374151;
+      color: #AFAFAF;
       margin-bottom: 20px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background-color: #2A2A2A;
+      margin-left: auto;
+      margin-right: auto;
+      display: inline-block;
     }
 
-    #upload {
+    .upload-container {
       width: 100%;
-      padding: 12px;
-      border: 2px dashed #93C5FD;
-      background: #EFF6FF;
-      color: #1E3A8A;
+      margin-bottom: 16px;
+      position: relative;
+      max-width: 260px;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .file-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 16px;
+      border: 2px dashed #3A3A3A;
+      background: #2A2A2A;
+      color: #AFAFAF;
       border-radius: 8px;
       cursor: pointer;
-      outline: none;
-      transition: background 0.3s;
+      font-weight: 500;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
 
-    #upload:hover {
-      background: #DBEAFE;
+    .file-label:hover {
+      background: #333333;
+      border-color: #4A4A4A;
+    }
+
+    .file-label svg {
+      margin-bottom: 12px;
+      width: 32px;
+      height: 32px;
     }
 
     .button {
       width: 100%;
       padding: 12px;
       margin-top: 10px;
-      background: #3B82F6;
-      color: white;
+      background: #333333;
+      color: #E0E0E0;
       font-size: 0.95rem;
       font-weight: 500;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s ease;
+      border: 1px solid #4A4A4A;
+      max-width: 260px;
+      box-sizing: border-box;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
     }
 
     .button:hover {
-      background: #2563EB;
+      background: #4A4A4A;
     }
 
     .button:disabled {
-      background: #D1D5DB;
-      color: #9CA3AF;
+      background: #2A2A2A;
+      color: #5A5A5A;
       cursor: not-allowed;
+      border-color: #3A3A3A;
     }
 
     .footer {
       margin-top: 20px;
       font-size: 0.875rem;
-      color: #9CA3AF;
+      color: #5A5A5A;
       text-align: center;
     }
   </style>
 </head>
 <body>
-  <p>Select a frame first, then upload up to 4 logos.</p>
-  <div class="counter">Logos uploaded: <span id="logoCount">0</span>/4</div>
-  <input type="file" id="upload" accept="image/*">
+  <p>Select frames first, then upload up to 4 logos.</p>
+  <div class="counter">Logos: <span id="logoCount">0</span>/4</div>
+  
+  <div class="upload-container">
+    <input type="file" id="file-input" class="file-input" accept="image/*">
+    <label for="file-input" class="file-label" id="upload-label">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M5 12H19" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Choose a logo file</span>
+    </label>
+  </div>
+  
   <button id="reset" class="button">Reset All Logos</button>
+  
   <script>
       let logoCount = 0;
       const maxLogos = 4;
-      const uploadInput = document.getElementById('upload');
+      const fileInput = document.getElementById('file-input');
+      const uploadLabel = document.getElementById('upload-label');
       const logoCountSpan = document.getElementById('logoCount');
 
-      uploadInput.onchange = (event) => {
+      // Handle file selection
+      fileInput.addEventListener('change', (event) => {
+          if (!event.target.files || !event.target.files[0]) {
+              return; // No file selected
+          }
+          
           const file = event.target.files[0];
           
           // Create an image element to get dimensions
@@ -131,6 +203,9 @@
               // Clean up
               URL.revokeObjectURL(objectUrl);
               
+              // Show loading state
+              uploadLabel.textContent = "Loading...";
+              
               // Read file as ArrayBuffer
               const reader = new FileReader();
               reader.onload = (e) => {
@@ -144,29 +219,96 @@
                   
                   logoCount++;
                   logoCountSpan.textContent = logoCount;
+                  
+                  // Reset button style
+                  uploadLabel.innerHTML = `
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 5V19M5 12H19" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <span>Choose a logo file</span>
+                  `;
+                  
                   if (logoCount >= maxLogos) {
-                      uploadInput.disabled = true;
+                      fileInput.disabled = true;
+                      uploadLabel.style.opacity = "0.5";
+                      uploadLabel.style.cursor = "not-allowed";
                   }
+                  
+                  // Reset the input to allow selecting the same file again
                   event.target.value = '';
               };
+              
+              reader.onerror = () => {
+                  // Handle error
+                  uploadLabel.innerHTML = `
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 5V19M5 12H19" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <span>Error loading file. Try again.</span>
+                  `;
+                  event.target.value = '';
+              };
+              
               reader.readAsArrayBuffer(file);
           };
           
+          img.onerror = () => {
+              // Handle error loading image
+              URL.revokeObjectURL(objectUrl);
+              uploadLabel.textContent = "Invalid image. Try again.";
+              event.target.value = '';
+          };
+          
           img.src = objectUrl;
-      };
+      });
 
       document.getElementById('reset').onclick = () => {
           parent.postMessage({
               pluginMessage: { type: 'reset' }
           }, '*');
+          // Reset local UI state immediately
           logoCount = 0;
           logoCountSpan.textContent = logoCount;
-          uploadInput.disabled = false;
+          fileInput.disabled = false;
+          uploadLabel.style.opacity = "1";
+          uploadLabel.style.cursor = "pointer";
+          uploadLabel.innerHTML = `
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19M5 12H19" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Choose a logo file</span>
+          `;
       };
 
       window.onmessage = (event) => {
-          if (event.data.pluginMessage.type === 'max-logos-reached') {
-              uploadInput.disabled = true;
+          if (!event.data.pluginMessage) return;
+          
+          const message = event.data.pluginMessage;
+          
+          if (message.type === 'max-logos-reached') {
+              fileInput.disabled = true;
+              uploadLabel.style.opacity = "0.5";
+              uploadLabel.style.cursor = "not-allowed";
+          } else if (message.type === 'update-count') {
+              logoCount = message.count;
+              logoCountSpan.textContent = logoCount;
+              
+              // Also update UI state based on count
+              if (logoCount >= maxLogos) {
+                  fileInput.disabled = true;
+                  uploadLabel.style.opacity = "0.5";
+                  uploadLabel.style.cursor = "not-allowed";
+              } else {
+                  fileInput.disabled = false;
+                  uploadLabel.style.opacity = "1";
+                  uploadLabel.style.cursor = "pointer";
+              }
+          } else if (message.type === 'reset-count') {
+              logoCount = 0;
+              logoCountSpan.textContent = logoCount;
+              fileInput.disabled = false;
+              uploadLabel.style.opacity = "1";
+              uploadLabel.style.cursor = "pointer";
           }
       };
   </script>
